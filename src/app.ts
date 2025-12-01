@@ -10,7 +10,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(
   cors({
-    origin: 'http://localhost:3000', // আপনার ফ্রন্টএন্ডের URL
+    origin: ['http://localhost:3000', 'https://universal-e-commerce-website-fronte.vercel.app/'], // আপনার ফ্রন্টএন্ডের URL
     credentials: true, // কুকি সেট করার জন্য এটি জরুরি
   }),
 );
