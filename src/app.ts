@@ -3,6 +3,8 @@ import cors from 'cors';
 
 import express from 'express';
 import router from './app/routes';
+import globalErrorHandler from './app/middleware/globalErrorHandler';
+import notFound from './app/middleware/notFound';
 const app: Application = express();
 
 //parser
@@ -15,6 +17,8 @@ app.use(
       'https://universal-e-commerce-website-fronte.vercel.app',
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
 app.use('/api/v1', router);
@@ -24,5 +28,8 @@ app.get('/', (req: Request, res: Response) => {
     status: 'OK',
   });
 });
+
+app.use(globalErrorHandler);
+app.use(notFound);
 
 export default app;
