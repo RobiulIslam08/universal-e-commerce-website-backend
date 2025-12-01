@@ -16,9 +16,10 @@ app.use(
 );
 app.use('/api/v1', router);
 app.get('/', (req: Request, res: Response) => {
-  const a = 1;
-
-  res.send(a);
+  res.send({
+    message: 'Universal E-Commerce Website Backend is running',
+    status: 'OK',
+  });
 });
 
 export default app;
