@@ -17,4 +17,16 @@ router.post(
 
 router.get('/', ProductControllers.getAllProducts);
 
+router.get('/:id', ProductControllers.getSingleProduct);
+
+router.patch(
+  '/:id',
+  upload.array('images'),
+  parseBody,
+  validateRequest(ProductValidation.updateProductValidationSchema),
+  ProductControllers.updateProduct,
+);
+
+router.delete('/:id', ProductControllers.deleteProduct);
+
 export const ProductRoutes = router;

@@ -46,7 +46,71 @@ const getAllProducts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getSingleProduct = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await ProductServices.getSingleProductFromDB(id);
+
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Product retrieved successfully',
+    data: result,
+  });
+});
+
+const updateProduct = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const images = [];
+
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    for (const file of req.files) {
+      const imageName = file.originalname;
+      const path = file.path;
+
+      const result = await sendImageToCloudinary(imageName, path);
+      images.push(result.secure_url as string);
+    }
+    req.body.images = images;
+  }
+
+  const result = await ProductServices.updateProductInDB(id, req.body);
+
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Product updated successfully',
+    data: result,
+  });
+});
+
+const deleteProduct = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await ProductServices.deleteProductFromDB(id);
+
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Product not found');
+  }
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Product deleted successfully',
+    data: result,
+  });
+});
+
 export const ProductControllers = {
   createProduct,
   getAllProducts,
+  getSingleProduct,
+  updateProduct,
+  deleteProduct,
 };
