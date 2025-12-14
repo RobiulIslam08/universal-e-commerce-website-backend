@@ -7,6 +7,7 @@ import { sendImageToCloudinaryFromBuffer } from '../../utils/sendImageToCloudina
 import AppError from '../../errors/AppError';
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {
+ 
   if (!req.files) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Please upload an image');
   }
