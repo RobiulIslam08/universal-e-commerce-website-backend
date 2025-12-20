@@ -1,0 +1,39 @@
+### Test Payment Creation
+POST http://localhost:5000/api/payments
+Content-Type: application/json
+
+{
+  "userId": "6751829f99f2bd18d99cd21e",
+  "userEmail": "test@example.com",
+  "userName": "Test User",
+  "paymentIntentId": "pi_test_123456789",
+  "amount": 199.99,
+  "currency": "usd",
+  "status": "succeeded",
+  "paymentMethod": "card",
+  "items": [
+    {
+      "productId": "prod_123",
+      "productName": "Test Product",
+      "quantity": 2,
+      "price": 99.99,
+      "image": "https://example.com/image.jpg"
+    }
+  ],
+  "shippingAddress": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "address": "123 Main St",
+    "city": "New York",
+    "state": "NY",
+    "zipCode": "10001",
+    "country": "US",
+    "phone": "+1234567890"
+  }
+}
+
+### Get Payment Stats
+GET http://localhost:5000/api/payments/admin/stats
+
+### Get All Payments
+GET http://localhost:5000/api/payments/admin/all?page=1&limit=10
