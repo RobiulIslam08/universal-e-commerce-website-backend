@@ -30,6 +30,8 @@ const registerUser = async (payload: IRegister): Promise<IAuthResponse> => {
   const jwtPayload = {
     userId: newUser._id.toString(),
     role: newUser.role,
+    name: newUser.name,
+    email: newUser.email,
   };
 
   // Generate tokens
@@ -87,6 +89,8 @@ const loginUser = async (payload: ILogin): Promise<IAuthResponse> => {
   const jwtPayload = {
     userId: user._id.toString(),
     role: user.role,
+    name: user.name,
+    email: user.email,
   };
 
   // Generate tokens
@@ -183,6 +187,8 @@ const refreshToken = async (token: string) => {
   const jwtPayload = {
     userId: user._id.toString(),
     role: user.role,
+     name: user.name,
+    email: user.email,
   };
 
   const accessToken = createToken(
