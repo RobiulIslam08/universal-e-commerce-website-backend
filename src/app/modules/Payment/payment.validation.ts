@@ -108,6 +108,21 @@ const userIdParamValidationSchema = z.object({
     userId: z.string({ message: 'User ID is required' }).trim(),
   }),
 });
+const getUserPaymentsSchema = z.object({
+  params: z.object({
+    userId: z.string({ message: 'User ID is required' }).trim(),
+  }),
+  query: z.object({
+    page: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseInt(val, 10) : 1)),
+    limit: z
+      .string()
+      .optional()
+      .transform((val) => (val ? parseInt(val, 10) : 10)),
+  }),
+});
 
 export const PaymentValidation = {
   createPaymentValidationSchema,
@@ -116,4 +131,5 @@ export const PaymentValidation = {
   getAllPaymentsQueryValidationSchema,
   paymentIdParamValidationSchema,
   userIdParamValidationSchema,
+  getUserPaymentsSchema
 };

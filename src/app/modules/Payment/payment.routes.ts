@@ -13,7 +13,7 @@ const router = express.Router();
 router.post(
   '/',
   // auth(UserRole.USER, UserRole.ADMIN), // Uncomment when auth middleware is ready
-  validateRequest(PaymentValidation.createPaymentValidationSchema),
+  // validateRequest(PaymentValidation.createPaymentValidationSchema),
   PaymentController.createPayment,
 );
 
@@ -21,8 +21,8 @@ router.post(
 router.get(
   '/user/:userId',
   // auth(UserRole.USER, UserRole.ADMIN), // Uncomment when auth middleware is ready
-  validateRequest(PaymentValidation.userIdParamValidationSchema),
-  validateRequest(PaymentValidation.getUserPaymentsQueryValidationSchema),
+  validateRequest(PaymentValidation.getUserPaymentsSchema),
+ 
   PaymentController.getUserPayments,
 );
 

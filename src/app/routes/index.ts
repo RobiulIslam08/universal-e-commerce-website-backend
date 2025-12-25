@@ -26,7 +26,7 @@ const moduleRoute = [
     route: CarouselRoutes,
   },
   {
-    path: '/payments',
+    path: '/payment',
     route: PaymentRoutes,
   },
 ];

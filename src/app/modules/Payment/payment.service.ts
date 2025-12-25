@@ -39,18 +39,24 @@ const createPaymentIntoDB = async (
 };
 
 // Get user's payment history
+// Get user's payment history
 const getUserPaymentsFromDB = async (
   userId: string,
   query: IPaymentQuery,
 ): Promise<{
-  payments: IPaymentDocument[];
-  total: number;
-  page: number;
-  totalPages: number;
+  data: IPaymentDocument[];
+  meta: {
+    total: number;
+    page: number;
+    totalPage: number;
+    limit: number;
+  };
 }> => {
-  const page = query.page || 1;
-  const limit = query.limit || 10;
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
+
+  console.log('🔍 Fetching payments for userId:', userId, { page, limit });
 
   // Build filter
   const filter: any = { userId, isDeleted: false };
@@ -67,13 +73,19 @@ const getUserPaymentsFromDB = async (
     .populate('userId', 'name email');
 
   const total = await Payment.countDocuments(filter);
-  const totalPages = Math.ceil(total / limit);
+  const totalPage = Math.ceil(total / limit);
 
+  console.log('✅ Found payments:', payments.length, 'Total:', total);
+
+  // ✅ Return করুন standard structure এ
   return {
-    payments,
-    total,
-    page,
-    totalPages,
+    data: payments,
+    meta: {
+      total,
+      page,
+      totalPage,
+      limit,
+    },
   };
 };
 
