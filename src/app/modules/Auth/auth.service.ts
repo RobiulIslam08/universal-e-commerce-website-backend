@@ -7,6 +7,7 @@ import {
   ILogin,
   IChangePassword,
   IAuthResponse,
+  ISocialLogin,
 } from './auth.interface';
 import { createToken } from './auth.utils';
 import { User } from '../User/user.model';
@@ -117,7 +118,69 @@ const loginUser = async (payload: ILogin): Promise<IAuthResponse> => {
     },
   };
 };
+// ==================== ‍Social Google LOGIN ====================
 
+const socialLogin = async (payload: ISocialLogin): Promise<IAuthResponse> => {
+  // ১. চেক করুন ইউজার ইমেইল দিয়ে ডাটাবেসে আছে কিনা
+  const user = await User.findOne({ email: payload.email });
+
+  let resultUser;
+
+  if (!user) {
+    // ২. যদি ইউজার না থাকে, তবে নতুন ইউজার তৈরি করুন
+    // যেহেতু গুগল দিয়ে লগিন হচ্ছে, তাই পাসওয়ার্ড দরকার নেই, কিন্তু মডেলে require করা থাকলে ডামি পাসওয়ার্ড দিতে হবে
+    const payloadData = {
+      name: payload.name,
+      email: payload.email,
+      profileImage: payload.image,
+      password: `social_pass_${Math.random().toString(36).slice(-8)}`, // র‍্যান্ডম পাসওয়ার্ড
+      role: 'user', // ডিফল্ট রোল
+    };
+
+    resultUser = await User.create(payloadData);
+  } else {
+    // ৩. যদি ইউজার থাকে, তবে তাকেই সিলেক্ট করুন
+    // ব্লক বা ডিলিট চেক করা ভালো
+    if (User.isUserDeleted(user)) {
+      throw new AppError(httpStatus.FORBIDDEN, 'This user has been deleted');
+    }
+    if (User.isUserBlocked(user)) {
+      throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked');
+    }
+    resultUser = user;
+  }
+
+  // ৪. টোকেন জেনারেট করুন (লগিনের মতোই)
+  const jwtPayload = {
+    userId: resultUser._id.toString(),
+    role: resultUser.role,
+    name: resultUser.name,
+    email: resultUser.email,
+  };
+
+  const accessToken = createToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string,
+  );
+
+  const refreshToken = createToken(
+    jwtPayload,
+    config.jwt_refresh_secret as string,
+    config.jwt_refresh_expires_in as string,
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      _id: resultUser._id.toString(),
+      name: resultUser.name,
+      email: resultUser.email,
+      role: resultUser.role,
+    },
+  };
+};
 // ==================== CHANGE PASSWORD ====================
 const changePassword = async (
   userData: JwtPayload,
@@ -292,4 +355,5 @@ export const AuthServices = {
   refreshToken,
   forgetPassword,
   resetPassword,
+  socialLogin
 };

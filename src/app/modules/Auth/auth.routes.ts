@@ -21,6 +21,11 @@ router.post(
   AuthControllers.loginUser,
 );
 
+// ====================Social LOGIN ====================
+router.post(
+  '/social-login',
+  AuthControllers.socialLogin
+);
 // ==================== CHANGE PASSWORD ====================
 router.post(
   '/change-password',

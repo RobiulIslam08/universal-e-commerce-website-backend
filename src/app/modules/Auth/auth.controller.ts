@@ -51,6 +51,31 @@ const loginUser = catchAsync(async (req, res) => {
     },
   });
 });
+
+// ==================== SOCIAL GOOGLE LOGIN ====================
+const socialLogin = catchAsync(async (req, res) => {
+  const result = await AuthServices.socialLogin(req.body);
+  const { refreshToken, accessToken, user } = result;
+
+  // রিফ্রেশ টোকেন সেট করা
+  res.cookie('refreshToken', refreshToken, {
+    secure: config.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'none',
+    maxAge: 1000 * 60 * 60 * 24 * 365,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User logged in via social media successfully',
+    data: {
+      accessToken,
+      user,
+    },
+  });
+});
+
 // ==================== CHANGE PASSWORD ====================
 const changePassword = catchAsync(async (req, res) => {
   const { ...passwordData } = req.body;
@@ -102,9 +127,12 @@ const resetPassword = catchAsync(async (req, res) => {
   });
 });
 
+
+
 export const AuthControllers = {
   register,
   loginUser,
+  socialLogin,
   changePassword,
   refreshToken,
   forgetPassword,

@@ -12,6 +12,11 @@ export interface ILogin {
   email: string;
   password: string;
 }
+export interface ISocialLogin {
+  email: string;
+  name: string;
+  image?: string;
+}
 
 // Change Password Interface
 export interface IChangePassword {
