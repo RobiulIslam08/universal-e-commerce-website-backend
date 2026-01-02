@@ -1,0 +1,70 @@
+### Review API Tests
+
+### Variables
+@baseUrl = http://localhost:5000/api/v1
+
+# ============ PUBLIC ROUTES (No Auth Required) ============
+
+### 1. Create a new review (replace productId with actual product ID)
+POST {{baseUrl}}/reviews
+Content-Type: application/json
+
+{
+  "productId": "YOUR_PRODUCT_ID_HERE",
+  "reviewerName": "John Doe",
+  "reviewerEmail": "john@example.com",
+  "rating": 5,
+  "title": "Excellent product!",
+  "comment": "This product exceeded my expectations. Great quality and fast delivery!"
+}
+
+### 2. Create another review without email and title
+POST {{baseUrl}}/reviews
+Content-Type: application/json
+
+{
+  "productId": "YOUR_PRODUCT_ID_HERE",
+  "reviewerName": "Jane Smith",
+  "rating": 4,
+  "comment": "Good product overall. Would recommend to others looking for quality items."
+}
+
+### 3. Create review with minimum rating
+POST {{baseUrl}}/reviews
+Content-Type: application/json
+
+{
+  "productId": "YOUR_PRODUCT_ID_HERE",
+  "reviewerName": "Bob Wilson",
+  "rating": 2,
+  "comment": "Product was okay but not what I expected. Delivery was late."
+}
+
+### 4. Get all reviews for a product (replace with actual product ID)
+GET {{baseUrl}}/reviews/product/YOUR_PRODUCT_ID_HERE
+
+# ============ ADMIN ROUTES ============
+
+### 5. Get all reviews (Admin)
+GET {{baseUrl}}/reviews/admin/all
+
+### 6. Get pending reviews (Admin)
+GET {{baseUrl}}/reviews/admin/pending
+
+### 7. Get single review (replace with actual review ID)
+GET {{baseUrl}}/reviews/YOUR_REVIEW_ID_HERE
+
+### 8. Update a review (replace with actual review ID)
+PATCH {{baseUrl}}/reviews/YOUR_REVIEW_ID_HERE
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "comment": "Updated my review - the product grew on me!"
+}
+
+### 9. Toggle review approval (replace with actual review ID)
+PATCH {{baseUrl}}/reviews/admin/toggle-approval/YOUR_REVIEW_ID_HERE
+
+### 10. Delete a review (replace with actual review ID)
+DELETE {{baseUrl}}/reviews/YOUR_REVIEW_ID_HERE
