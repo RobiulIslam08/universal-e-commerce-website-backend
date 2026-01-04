@@ -296,6 +296,119 @@ const searchProductsFromDB = async (searchTerm: string) => {
   return products;
 };
 
+// Get best seller products
+const getBestSellerProductsFromDB = async (limit: number = 10) => {
+  const products = await Product.find({
+    isDeleted: { $ne: true },
+  })
+    .sort({ soldCount: -1, rating: -1 })
+    .limit(limit)
+    .select(
+      'title price strikePrice images category subCategory rating reviewCount soldCount',
+    );
+
+  return products;
+};
+
+// Get featured products
+const getFeaturedProductsFromDB = async (limit: number = 10) => {
+  const products = await Product.find({
+    isDeleted: { $ne: true },
+    isFeatured: true,
+  })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .select(
+      'title price strikePrice images category subCategory rating reviewCount',
+    );
+
+  return products;
+};
+
+// Get products by category with advanced filtering
+const getProductsByCategoryFromDB = async (
+  categorySlug: string,
+  query: TProductQuery,
+) => {
+  const {
+    subCategory,
+    minPrice,
+    maxPrice,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    page = '1',
+    limit = '12',
+    searchTerm,
+  } = query;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filter: any = {
+    isDeleted: { $ne: true },
+    category: categorySlug,
+  };
+
+  // Filter by subcategory
+  if (subCategory && subCategory.trim() !== '') {
+    filter.subCategory = subCategory.trim().toLowerCase();
+  }
+
+  // Search within category
+  if (searchTerm && searchTerm.trim() !== '') {
+    const escapedSearch = searchTerm
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$or = [
+      { title: { $regex: escapedSearch, $options: 'i' } },
+      { shortDescription: { $regex: escapedSearch, $options: 'i' } },
+      { brand: { $regex: escapedSearch, $options: 'i' } },
+      { tags: { $regex: escapedSearch, $options: 'i' } },
+    ];
+  }
+
+  // Price range filter
+  if (minPrice || maxPrice) {
+    filter.price = {};
+    if (minPrice) filter.price.$gte = Number(minPrice);
+    if (maxPrice) filter.price.$lte = Number(maxPrice);
+  }
+
+  // Pagination
+  const pageNumber = Math.max(1, Number(page) || 1);
+  const limitNumber = Math.max(1, Math.min(100, Number(limit) || 12));
+  const skip = (pageNumber - 1) * limitNumber;
+
+  // Sort
+  const sortObject: { [key: string]: 1 | -1 } = {
+    [sortBy]: sortOrder === 'asc' ? 1 : -1,
+  };
+
+  // Execute query
+  const total = await Product.countDocuments(filter);
+  const products = await Product.find(filter)
+    .sort(sortObject)
+    .skip(skip)
+    .limit(limitNumber);
+
+  return {
+    products,
+    meta: {
+      page: pageNumber,
+      limit: limitNumber,
+      total,
+      totalPage: Math.ceil(total / limitNumber),
+    },
+  };
+};
+
+// Get product count by category
+const getProductCountByCategoryFromDB = async (categorySlug: string) => {
+  const count = await Product.countDocuments({
+    category: categorySlug,
+    isDeleted: { $ne: true },
+  });
+  return count;
+};
+
 export const ProductServices = {
   createProductIntoDB,
   getAllProductsFromDB,
@@ -303,4 +416,8 @@ export const ProductServices = {
   updateProductInDB,
   deleteProductFromDB,
   searchProductsFromDB,
+  getBestSellerProductsFromDB,
+  getFeaturedProductsFromDB,
+  getProductsByCategoryFromDB,
+  getProductCountByCategoryFromDB,
 };

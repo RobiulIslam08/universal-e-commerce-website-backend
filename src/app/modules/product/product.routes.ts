@@ -18,6 +18,15 @@ router.post(
 // Search products - GET /api/v1/products/search?q=searchTerm
 router.get('/search', ProductControllers.searchProducts);
 
+// Get best seller products - GET /api/v1/products/best-sellers?limit=10
+router.get('/best-sellers', ProductControllers.getBestSellerProducts);
+
+// Get featured products - GET /api/v1/products/featured?limit=10
+router.get('/featured', ProductControllers.getFeaturedProducts);
+
+// Get products by category - GET /api/v1/products/category/:category
+router.get('/category/:category', ProductControllers.getProductsByCategory);
+
 router.get('/', ProductControllers.getAllProducts);
 
 router.get('/:id', ProductControllers.getSingleProduct);

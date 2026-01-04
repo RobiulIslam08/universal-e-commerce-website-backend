@@ -6,6 +6,7 @@ import { ProductRoutes } from '../modules/product/product.routes';
 import { CarouselRoutes } from '../modules/carousel/carousel.routes';
 import { PaymentRoutes } from '../modules/Payment/payment.routes';
 import { ReviewRoutes } from '../modules/Review/review.routes';
+import { CategoryRoutes } from '../modules/Category/category.routes';
 
 const router = express.Router();
 
@@ -17,6 +18,10 @@ const moduleRoute = [
   {
     path: '/auth',
     route: AuthRoutes,
+  },
+  {
+    path: '/categories',
+    route: CategoryRoutes,
   },
   {
     path: '/products',

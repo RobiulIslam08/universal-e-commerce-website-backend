@@ -141,6 +141,56 @@ const deleteProduct = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+// Get best seller products
+const getBestSellerProducts = catchAsync(
+  async (req: Request, res: Response) => {
+    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const result = await ProductServices.getBestSellerProductsFromDB(limit);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'Best seller products retrieved successfully',
+      data: result,
+    });
+  },
+);
+
+// Get featured products
+const getFeaturedProducts = catchAsync(async (req: Request, res: Response) => {
+  const limit = req.query.limit ? Number(req.query.limit) : 10;
+  const result = await ProductServices.getFeaturedProductsFromDB(limit);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Featured products retrieved successfully',
+    data: result,
+  });
+});
+
+// Get products by category
+const getProductsByCategory = catchAsync(
+  async (req: Request, res: Response) => {
+    const { category } = req.params;
+    console.log(`📥 getProductsByCategory - Category: ${category}`);
+    console.log('📥 Query params:', req.query);
+
+    const result = await ProductServices.getProductsByCategoryFromDB(
+      category,
+      req.query,
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: `Products in category "${category}" retrieved successfully`,
+      meta: result.meta,
+      data: result.products,
+    });
+  },
+);
+
 export const ProductControllers = {
   createProduct,
   getAllProducts,
@@ -148,4 +198,7 @@ export const ProductControllers = {
   updateProduct,
   deleteProduct,
   searchProducts,
+  getBestSellerProducts,
+  getFeaturedProducts,
+  getProductsByCategory,
 };
