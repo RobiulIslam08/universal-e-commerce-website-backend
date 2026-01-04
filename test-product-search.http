@@ -1,0 +1,47 @@
+### Product Search API Tests
+
+### Variables
+@baseUrl = http://localhost:5000/api/v1
+
+# ============ SEARCH ENDPOINTS ============
+
+### 1. Search products by keyword
+GET {{baseUrl}}/products/search?q=shirt
+
+### 2. Search products (another example)
+GET {{baseUrl}}/products/search?q=phone
+
+### 3. Search with empty query (should return empty array)
+GET {{baseUrl}}/products/search?q=
+
+# ============ GET ALL PRODUCTS WITH FILTERS ============
+
+### 4. Get all products (default pagination)
+GET {{baseUrl}}/products
+
+### 5. Get products with search term
+GET {{baseUrl}}/products?searchTerm=laptop
+
+### 6. Get products by category
+GET {{baseUrl}}/products?category=Electronics
+
+### 7. Get products by category and subcategory
+GET {{baseUrl}}/products?category=Fashion&subCategory=Shirts
+
+### 8. Get products with price range
+GET {{baseUrl}}/products?minPrice=100&maxPrice=500
+
+### 9. Get products sorted by price (low to high)
+GET {{baseUrl}}/products?sortBy=price&sortOrder=asc
+
+### 10. Get products sorted by price (high to low)
+GET {{baseUrl}}/products?sortBy=price&sortOrder=desc
+
+### 11. Get products with pagination
+GET {{baseUrl}}/products?page=1&limit=5
+
+### 12. Combined filters: category + price range + sorting + pagination
+GET {{baseUrl}}/products?category=Electronics&minPrice=50&maxPrice=1000&sortBy=price&sortOrder=asc&page=1&limit=10
+
+### 13. Search with all filters combined
+GET {{baseUrl}}/products?searchTerm=wireless&category=Electronics&minPrice=20&maxPrice=200&sortBy=createdAt&sortOrder=desc&page=1&limit=12

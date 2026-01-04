@@ -7,7 +7,6 @@ import { sendImageToCloudinaryFromBuffer } from '../../utils/sendImageToCloudina
 import AppError from '../../errors/AppError';
 
 const createProduct = catchAsync(async (req: Request, res: Response) => {
- 
   if (!req.files) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Please upload an image');
   }
@@ -38,12 +37,44 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllProducts = catchAsync(async (req: Request, res: Response) => {
-  const result = await ProductServices.getAllProductsFromDB();
+  console.log('📥 getAllProducts controller - Query params:', req.query);
+
+  const result = await ProductServices.getAllProductsFromDB(req.query);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'Products retrieved successfully',
+    meta: result.meta,
+    data: result.products,
+  });
+});
+
+// Search products endpoint
+const searchProducts = catchAsync(async (req: Request, res: Response) => {
+  console.log('📥 searchProducts controller - Query params:', req.query);
+
+  const { q } = req.query;
+
+  // Validate search term
+  if (!q || typeof q !== 'string' || q.trim() === '') {
+    return sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'No search term provided',
+      data: [],
+    });
+  }
+
+  const searchTerm = q as string;
+  console.log('🔍 Searching for:', searchTerm);
+
+  const result = await ProductServices.searchProductsFromDB(searchTerm);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: result.length > 0 ? 'Products found' : 'No products found',
     data: result,
   });
 });
@@ -116,4 +147,5 @@ export const ProductControllers = {
   getSingleProduct,
   updateProduct,
   deleteProduct,
+  searchProducts,
 };

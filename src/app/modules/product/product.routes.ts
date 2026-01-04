@@ -15,6 +15,9 @@ router.post(
   ProductControllers.createProduct,
 );
 
+// Search products - GET /api/v1/products/search?q=searchTerm
+router.get('/search', ProductControllers.searchProducts);
+
 router.get('/', ProductControllers.getAllProducts);
 
 router.get('/:id', ProductControllers.getSingleProduct);
