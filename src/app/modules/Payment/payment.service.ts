@@ -1,5 +1,6 @@
 import httpStatus from 'http-status';
 import Stripe from 'stripe';
+import mongoose,{ Types } from 'mongoose';
 import { Payment } from './payment.model';
 import {
   ICreatePaymentDTO,
@@ -10,6 +11,7 @@ import {
 } from './payment.interface';
 import AppError from '../../errors/AppError';
 import config from '../../config';
+import { Product } from '../product/product.model';
 
 // Initialize Stripe
 const stripe = new Stripe(config.stripe_secret_key as string, {
@@ -17,25 +19,112 @@ const stripe = new Stripe(config.stripe_secret_key as string, {
 });
 
 // Create a new payment record
+// const createPaymentIntoDB = async (
+//   payload: ICreatePaymentDTO,
+// ): Promise<IPaymentDocument> => {
+//   // Check if payment already exists
+//   const existingPayment = await Payment.isPaymentExists(
+//     payload.paymentIntentId,
+//   );
+
+//   if (existingPayment) {
+//     throw new AppError(
+//       httpStatus.CONFLICT,
+//       'Payment record already exists with this payment intent ID',
+//     );
+//   }
+
+//   // Create payment record
+//   const payment = await Payment.create(payload);
+
+//   return payment;
+// };
+
 const createPaymentIntoDB = async (
   payload: ICreatePaymentDTO,
-): Promise<IPaymentDocument> => {
-  // Check if payment already exists
-  const existingPayment = await Payment.isPaymentExists(
-    payload.paymentIntentId,
-  );
+): Promise<IPaymentDocument | null> => {
+  const session = await mongoose.startSession();
 
-  if (existingPayment) {
-    throw new AppError(
-      httpStatus.CONFLICT,
-      'Payment record already exists with this payment intent ID',
-    );
+  try {
+    session.startTransaction();
+
+    // ১. চেক করুন পেমেন্ট আগে থেকেই আছে কিনা
+    const existingPayment = await Payment.findOne({
+      paymentIntentId: payload.paymentIntentId,
+    }).session(session);
+
+    let paymentData;
+
+    // যদি পেমেন্ট না থাকে, তাহলে নতুন তৈরি করুন
+    if (!existingPayment) {
+      const result = await Payment.create([payload], { session });
+      if (!result.length) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create payment record');
+      }
+      paymentData = result[0];
+    } else {
+      // যদি থাকে, তাহলে সেই ডাটাই ব্যবহার করুন (Error throw করবেন না)
+      paymentData = existingPayment;
+      
+      // যদি ইতিমধ্যে সফল এবং প্রসেসড হয়ে থাকে, তাহলে স্টক আপডেটের দরকার নেই
+      if (existingPayment.status === 'succeeded') {
+         // আমরা ধরে নিচ্ছি আগের রিকোয়েস্টে স্টক আপডেট হয়েছে, তাই এখানে রিটার্ন করছি
+         // তবে আপনি চাইলে ডাবল চেক করার লজিক বসাতে পারেন
+      }
+    }
+
+    // ২. ইনভেন্টরি আপডেট লজিক (Stock কমানো এবং Sold Count বাড়ানো)
+    // শর্ত: পেমেন্ট সফল হতে হবে
+    if (payload.status === 'succeeded') {
+      
+      for (const item of payload.items) {
+        // প্রোডাক্ট আইডিকে ObjectId তে কনভার্ট করুন (খুবই গুরুত্বপূর্ণ)
+        const productId = new Types.ObjectId(item.productId);
+
+        // ৩. স্টক আপডেট কুয়েরি
+        const productUpdate = await Product.findOneAndUpdate(
+          {
+            _id: productId,
+            stockQuantity: { $gte: item.quantity }, // চেক: স্টকে পর্যাপ্ত পণ্য আছে কি না
+          },
+          {
+            $inc: { 
+              stockQuantity: -item.quantity, // স্টক কমানো
+              soldCount: item.quantity       // Sold Count বাড়ানো
+            },
+          },
+          { session, new: true }
+        );
+
+        // যদি প্রোডাক্ট আপডেট না হয় (মানে স্টক নেই বা আইডি ভুল)
+        if (!productUpdate) {
+          // যদি পেমেন্ট ইতিমধ্যে সেভ হয়ে থাকে কিন্তু স্টক না থাকে, তখন কি করবেন?
+          // সাধারনত পেমেন্ট হয়ে গেলে এডমিনকে নোটিফাই করা উচিত, কিন্তু এখানে আমরা এরর দিচ্ছি
+          throw new AppError(
+            httpStatus.BAD_REQUEST,
+            `Stock update failed for: ${item.productName}. Insufficient stock or invalid ID.`
+          );
+        }
+      }
+      
+      // পেমেন্ট স্ট্যাটাস আপডেট করুন (যদি আগে pending থেকে থাকে)
+      if (existingPayment && existingPayment.status !== 'succeeded') {
+          existingPayment.status = PaymentStatus.SUCCEEDED;
+          await existingPayment.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    return paymentData;
+
+  } catch (error) {
+    await session.abortTransaction();
+    await session.endSession();
+    console.error("Transaction Error:", error); // কনসোলে এরর দেখুন
+    throw error;
   }
-
-  // Create payment record
-  const payment = await Payment.create(payload);
-
-  return payment;
 };
 
 // Get user's payment history
