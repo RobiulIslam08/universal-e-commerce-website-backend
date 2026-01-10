@@ -12,6 +12,7 @@ type TProductQuery = {
   sortOrder?: 'asc' | 'desc';
   page?: string;
   limit?: string;
+  stock?:string
 };
 
 const createProductIntoDB = async (payload: TProduct) => {
@@ -19,80 +20,6 @@ const createProductIntoDB = async (payload: TProduct) => {
   return result;
 };
 
-// const getAllProductsFromDB = async (query: TProductQuery) => {
-//   const {
-//     searchTerm,
-//     category,
-//     subCategory,
-//     minPrice,
-//     maxPrice,
-//     sortBy = 'createdAt',
-//     sortOrder = 'desc',
-//     page = '1',
-//     limit = '10',
-//   } = query;
-
-//   // Build filter object
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   const filter: any = { isDeleted: { $ne: true } };
-
-//   // Search by title, category, subCategory, shortDescription
-//   if (searchTerm) {
-//     filter.$or = [
-//       { title: { $regex: searchTerm, $options: 'i' } },
-//       { category: { $regex: searchTerm, $options: 'i' } },
-//       { subCategory: { $regex: searchTerm, $options: 'i' } },
-//       { shortDescription: { $regex: searchTerm, $options: 'i' } },
-//       { sku: { $regex: searchTerm, $options: 'i' } },
-//     ];
-//   }
-
-//   // Filter by category
-//   if (category) {
-//     filter.category = { $regex: category, $options: 'i' };
-//   }
-
-//   // Filter by subCategory
-//   if (subCategory) {
-//     filter.subCategory = { $regex: subCategory, $options: 'i' };
-//   }
-
-//   // Filter by price range
-//   if (minPrice || maxPrice) {
-//     filter.price = {};
-//     if (minPrice) filter.price.$gte = Number(minPrice);
-//     if (maxPrice) filter.price.$lte = Number(maxPrice);
-//   }
-
-//   // Pagination
-//   const pageNumber = Number(page);
-//   const limitNumber = Number(limit);
-//   const skip = (pageNumber - 1) * limitNumber;
-
-//   // Sort
-//   const sortObject: { [key: string]: 1 | -1 } = {
-//     [sortBy]: sortOrder === 'asc' ? 1 : -1,
-//   };
-
-//   // Get total count for pagination
-//   const total = await Product.countDocuments(filter);
-
-//   // Get products
-//   const products = await Product.find(filter)
-//     .sort(sortObject)
-//     .skip(skip)
-//     .limit(limitNumber);
-
-//   return {
-//     products,
-//     meta: {
-//       page: pageNumber,
-//       limit: limitNumber,
-//       total,
-//       totalPage: Math.ceil(total / limitNumber),
-//     },
-//   };
-// };
 
 const getAllProductsFromDB = async (query: TProductQuery) => {
   const {
@@ -101,6 +28,7 @@ const getAllProductsFromDB = async (query: TProductQuery) => {
     subCategory,
     minPrice,
     maxPrice,
+    stock,
     sortBy = 'createdAt',
     sortOrder = 'desc',
     page = '1',
@@ -112,10 +40,27 @@ const getAllProductsFromDB = async (query: TProductQuery) => {
     category,
     subCategory,
   });
-
+console.log('📥 Received Query at Backend:', query);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filter: any = { isDeleted: { $ne: true } };
 
+
+// ১. স্টক ফিল্টার (এটি সবার আগে রাখা ভালো)
+  if (stock === 'inStock') {
+    filter.stockQuantity = { $gt: 0 };
+  } else if (stock === 'outOfStock') {
+    filter.stockQuantity = { $lte: 0 };
+  }
+
+  // ২. ক্যাটাগরি ফিল্টার (শুধুমাত্র ভ্যালু থাকলেই ফিল্টার হবে)
+  if (category && category !== 'all') {
+    filter.category = { $regex: category, $options: 'i' };
+  }
+
+  // ৩. সাব-ক্যাটাগরি ফিল্টার
+  if (subCategory && subCategory !== 'all') {
+    filter.subCategory = { $regex: subCategory, $options: 'i' };
+  }
   // Search functionality
   if (searchTerm && searchTerm.trim() !== '') {
     const trimmedSearch = searchTerm.trim();
@@ -140,17 +85,7 @@ const getAllProductsFromDB = async (query: TProductQuery) => {
     console.log('🔍 Search pattern:', searchPattern);
   }
 
-  // Category filter
-  if (category && category.trim() !== '') {
-    filter.category = { $regex: category.trim(), $options: 'i' };
-    console.log('📁 Category filter:', category);
-  }
-
-  // SubCategory filter
-  if (subCategory && subCategory.trim() !== '') {
-    filter.subCategory = { $regex: subCategory.trim(), $options: 'i' };
-    console.log('📂 SubCategory filter:', subCategory);
-  }
+  
 
   // Price range filter
   if (minPrice || maxPrice) {

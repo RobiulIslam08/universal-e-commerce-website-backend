@@ -303,7 +303,7 @@ const forgetPassword = async (email: string): Promise<void> => {
   // TODO: Send email with reset link
   // sendEmail(user.email, resetUILink);
 
-  console.log('Password reset link:', resetUILink);
+  
 };
 
 // ==================== RESET PASSWORD ====================
