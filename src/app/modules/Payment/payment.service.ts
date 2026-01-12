@@ -53,29 +53,34 @@ const createPaymentIntoDB = async (
       paymentIntentId: payload.paymentIntentId,
     }).session(session);
 
+    // যদি পেমেন্ট ইতিমধ্যে সফলভাবে প্রসেস হয়ে থাকে, তাহলে সেই ডাটা রিটার্ন করুন
+    if (existingPayment && existingPayment.status === 'succeeded') {
+      await session.commitTransaction();
+      await session.endSession();
+      console.log('✅ Payment already processed, returning existing payment');
+      return existingPayment;
+    }
+
     let paymentData;
 
     // যদি পেমেন্ট না থাকে, তাহলে নতুন তৈরি করুন
     if (!existingPayment) {
       const result = await Payment.create([payload], { session });
+      console.log('✅ New payment created:', result[0]?._id);
+      
       if (!result.length) {
         throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create payment record');
       }
       paymentData = result[0];
     } else {
-      // যদি থাকে, তাহলে সেই ডাটাই ব্যবহার করুন (Error throw করবেন না)
+      // পেমেন্ট আছে কিন্তু succeeded না (pending/processing)
       paymentData = existingPayment;
-      
-      // যদি ইতিমধ্যে সফল এবং প্রসেসড হয়ে থাকে, তাহলে স্টক আপডেটের দরকার নেই
-      if (existingPayment.status === 'succeeded') {
-         // আমরা ধরে নিচ্ছি আগের রিকোয়েস্টে স্টক আপডেট হয়েছে, তাই এখানে রিটার্ন করছি
-         // তবে আপনি চাইলে ডাবল চেক করার লজিক বসাতে পারেন
-      }
     }
 
     // ২. ইনভেন্টরি আপডেট লজিক (Stock কমানো এবং Sold Count বাড়ানো)
-    // শর্ত: পেমেন্ট সফল হতে হবে
-    if (payload.status === 'succeeded') {
+    // শর্ত: পেমেন্ট সফল হতে হবে এবং যদি এই পেমেন্ট আগে থেকে succeeded না থাকে
+    if (payload.status === 'succeeded' && (!existingPayment || existingPayment.status !== 'succeeded')) {
+      console.log('🔄 Updating inventory for', payload.items.length, 'items');
       
       for (const item of payload.items) {
         // প্রোডাক্ট আইডিকে ObjectId তে কনভার্ট করুন (খুবই গুরুত্বপূর্ণ)
@@ -105,24 +110,29 @@ const createPaymentIntoDB = async (
             `Stock update failed for: ${item.productName}. Insufficient stock or invalid ID.`
           );
         }
+        
+        console.log(`✅ Stock updated for ${item.productName}: -${item.quantity}`);
       }
       
       // পেমেন্ট স্ট্যাটাস আপডেট করুন (যদি আগে pending থেকে থাকে)
       if (existingPayment && existingPayment.status !== 'succeeded') {
           existingPayment.status = PaymentStatus.SUCCEEDED;
           await existingPayment.save({ session });
+          paymentData = existingPayment;
+          console.log('✅ Payment status updated to succeeded');
       }
     }
 
     await session.commitTransaction();
     await session.endSession();
 
+    console.log('✅ Transaction committed successfully');
     return paymentData;
 
   } catch (error) {
     await session.abortTransaction();
     await session.endSession();
-    console.error("Transaction Error:", error); // কনসোলে এরর দেখুন
+    console.error("❌ Transaction Error:", error);
     throw error;
   }
 };
