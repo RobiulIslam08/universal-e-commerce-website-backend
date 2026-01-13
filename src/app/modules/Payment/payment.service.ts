@@ -1,6 +1,6 @@
 import httpStatus from 'http-status';
 import Stripe from 'stripe';
-import mongoose,{ Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { Payment } from './payment.model';
 import {
   ICreatePaymentDTO,
@@ -67,9 +67,12 @@ const createPaymentIntoDB = async (
     if (!existingPayment) {
       const result = await Payment.create([payload], { session });
       console.log('✅ New payment created:', result[0]?._id);
-      
+
       if (!result.length) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create payment record');
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          'Failed to create payment record',
+        );
       }
       paymentData = result[0];
     } else {
@@ -79,9 +82,12 @@ const createPaymentIntoDB = async (
 
     // ২. ইনভেন্টরি আপডেট লজিক (Stock কমানো এবং Sold Count বাড়ানো)
     // শর্ত: পেমেন্ট সফল হতে হবে এবং যদি এই পেমেন্ট আগে থেকে succeeded না থাকে
-    if (payload.status === 'succeeded' && (!existingPayment || existingPayment.status !== 'succeeded')) {
+    if (
+      payload.status === 'succeeded' &&
+      (!existingPayment || existingPayment.status !== 'succeeded')
+    ) {
       console.log('🔄 Updating inventory for', payload.items.length, 'items');
-      
+
       for (const item of payload.items) {
         // প্রোডাক্ট আইডিকে ObjectId তে কনভার্ট করুন (খুবই গুরুত্বপূর্ণ)
         const productId = new Types.ObjectId(item.productId);
@@ -93,12 +99,12 @@ const createPaymentIntoDB = async (
             stockQuantity: { $gte: item.quantity }, // চেক: স্টকে পর্যাপ্ত পণ্য আছে কি না
           },
           {
-            $inc: { 
+            $inc: {
               stockQuantity: -item.quantity, // স্টক কমানো
-              soldCount: item.quantity       // Sold Count বাড়ানো
+              soldCount: item.quantity, // Sold Count বাড়ানো
             },
           },
-          { session, new: true }
+          { session, new: true },
         );
 
         // যদি প্রোডাক্ট আপডেট না হয় (মানে স্টক নেই বা আইডি ভুল)
@@ -107,19 +113,21 @@ const createPaymentIntoDB = async (
           // সাধারনত পেমেন্ট হয়ে গেলে এডমিনকে নোটিফাই করা উচিত, কিন্তু এখানে আমরা এরর দিচ্ছি
           throw new AppError(
             httpStatus.BAD_REQUEST,
-            `Stock update failed for: ${item.productName}. Insufficient stock or invalid ID.`
+            `Stock update failed for: ${item.productName}. Insufficient stock or invalid ID.`,
           );
         }
-        
-        console.log(`✅ Stock updated for ${item.productName}: -${item.quantity}`);
+
+        console.log(
+          `✅ Stock updated for ${item.productName}: -${item.quantity}`,
+        );
       }
-      
+
       // পেমেন্ট স্ট্যাটাস আপডেট করুন (যদি আগে pending থেকে থাকে)
       if (existingPayment && existingPayment.status !== 'succeeded') {
-          existingPayment.status = PaymentStatus.SUCCEEDED;
-          await existingPayment.save({ session });
-          paymentData = existingPayment;
-          console.log('✅ Payment status updated to succeeded');
+        existingPayment.status = PaymentStatus.SUCCEEDED;
+        await existingPayment.save({ session });
+        paymentData = existingPayment;
+        console.log('✅ Payment status updated to succeeded');
       }
     }
 
@@ -128,11 +136,10 @@ const createPaymentIntoDB = async (
 
     console.log('✅ Transaction committed successfully');
     return paymentData;
-
   } catch (error) {
     await session.abortTransaction();
     await session.endSession();
-    console.error("❌ Transaction Error:", error);
+    console.error('❌ Transaction Error:', error);
     throw error;
   }
 };
