@@ -15,6 +15,7 @@ export type TProduct = {
   longDescription: string;
   images: string[];
   specifications: TSpecification[];
+  aboutThisItem?: string[];
   tags?: string[]; // Additional tags for better search (e.g., ["smartphone", "5g", "android"])
   brand?: string; // Product brand
   rating?: number; // Average rating

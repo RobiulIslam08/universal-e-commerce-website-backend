@@ -22,6 +22,7 @@ const productSchema = new Schema<TProduct>(
     longDescription: { type: String, required: true },
     images: { type: [String], required: true },
     specifications: { type: [specificationSchema], default: [] },
+    aboutThisItem: { type: [String], default: [] },
     tags: { type: [String], default: [] },
     brand: { type: String, trim: true },
     rating: { type: Number, default: 0, min: 0, max: 5 },

@@ -1,4 +1,4 @@
-    import { z } from 'zod';
+import { z } from 'zod';
 
 const specificationValidationSchema = z.object({
   key: z.string().min(1, 'Specification key is required'),
@@ -6,7 +6,7 @@ const specificationValidationSchema = z.object({
 });
 
 const createProductValidationSchema = z.object({
-  body: z.object({ 
+  body: z.object({
     title: z.string().min(3, 'Title must be at least 3 characters'),
     category: z.string().min(1, 'Category is required'),
     subCategory: z.string().min(1, 'Sub-category is required'),
@@ -35,6 +35,7 @@ const createProductValidationSchema = z.object({
       .min(1, 'At least one image is required')
       .optional(),
     specifications: z.array(specificationValidationSchema).optional(),
+    aboutThisItem: z.array(z.string()).optional(),
   }),
 });
 
@@ -69,8 +70,12 @@ const updateProductValidationSchema = z.object({
       .string()
       .min(20, 'Long description must be at least 20 characters')
       .optional(),
-    images: z.array(z.string()).min(1, 'At least one image is required').optional(),
+    images: z
+      .array(z.string())
+      .min(1, 'At least one image is required')
+      .optional(),
     specifications: z.array(specificationValidationSchema).optional(),
+    aboutThisItem: z.array(z.string()).optional(),
   }),
 });
 
