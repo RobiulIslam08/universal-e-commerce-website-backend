@@ -14,6 +14,7 @@ app.use(
   cors({
     origin: [
       'http://localhost:3000',
+      'http://localhost:3001',
       'https://universal-e-commerce-website-fronte.vercel.app',
     ],
     credentials: true,

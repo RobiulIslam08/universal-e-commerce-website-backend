@@ -12,6 +12,10 @@ import {
 import AppError from '../../errors/AppError';
 import config from '../../config';
 import { Product } from '../product/product.model';
+import {
+  sendEmail,
+  getPaymentConfirmationEmailTemplate,
+} from '../../utils/sendEmail';
 
 // Initialize Stripe
 const stripe = new Stripe(config.stripe_secret_key as string, {
@@ -57,7 +61,7 @@ const createPaymentIntoDB = async (
     if (existingPayment && existingPayment.status === 'succeeded') {
       await session.commitTransaction();
       await session.endSession();
-      console.log('✅ Payment already processed, returning existing payment');
+
       return existingPayment;
     }
 
@@ -66,7 +70,6 @@ const createPaymentIntoDB = async (
     // যদি পেমেন্ট না থাকে, তাহলে নতুন তৈরি করুন
     if (!existingPayment) {
       const result = await Payment.create([payload], { session });
-      console.log('✅ New payment created:', result[0]?._id);
 
       if (!result.length) {
         throw new AppError(
@@ -86,8 +89,6 @@ const createPaymentIntoDB = async (
       payload.status === 'succeeded' &&
       (!existingPayment || existingPayment.status !== 'succeeded')
     ) {
-      console.log('🔄 Updating inventory for', payload.items.length, 'items');
-
       for (const item of payload.items) {
         // প্রোডাক্ট আইডিকে ObjectId তে কনভার্ট করুন (খুবই গুরুত্বপূর্ণ)
         const productId = new Types.ObjectId(item.productId);
@@ -116,10 +117,6 @@ const createPaymentIntoDB = async (
             `Stock update failed for: ${item.productName}. Insufficient stock or invalid ID.`,
           );
         }
-
-        console.log(
-          `✅ Stock updated for ${item.productName}: -${item.quantity}`,
-        );
       }
 
       // পেমেন্ট স্ট্যাটাস আপডেট করুন (যদি আগে pending থেকে থাকে)
@@ -127,14 +124,37 @@ const createPaymentIntoDB = async (
         existingPayment.status = PaymentStatus.SUCCEEDED;
         await existingPayment.save({ session });
         paymentData = existingPayment;
-        console.log('✅ Payment status updated to succeeded');
+      }
+
+      // ✅ Payment successful - Send confirmation email
+      try {
+        const emailHtml = getPaymentConfirmationEmailTemplate(
+          payload.userName,
+          payload.amount,
+          payload.currency ?? 'eur',
+          payload.paymentIntentId,
+          payload.items,
+          payload.shippingAddress,
+        );
+
+        await sendEmail({
+          to: payload.userEmail,
+          subject: '✅ Payment Confirmation - Order Successful',
+          html: emailHtml,
+        });
+
+        console.log(
+          `✅ Payment confirmation email sent to: ${payload.userEmail}`,
+        );
+      } catch (emailError) {
+        console.error('❌ Failed to send confirmation email:', emailError);
+        // Don't throw error - payment is already successful
       }
     }
 
     await session.commitTransaction();
     await session.endSession();
 
-    console.log('✅ Transaction committed successfully');
     return paymentData;
   } catch (error) {
     await session.abortTransaction();
@@ -161,8 +181,6 @@ const getUserPaymentsFromDB = async (
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 10;
   const skip = (page - 1) * limit;
-
-  console.log('🔍 Fetching payments for userId:', userId, { page, limit });
 
   // Build filter
   const filter: any = { userId, isDeleted: false };

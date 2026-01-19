@@ -19,11 +19,11 @@ import { PaymentStatus } from './payment.interface';
 // payment.controller.ts
 
 const createPayment = catchAsync(async (req, res) => {
-  console.log('📥 Received payment data:', JSON.stringify(req.body, null, 2)); // ✅ Full body দেখুন
+ // ✅ Full body দেখুন
   
   try {
     const result = await PaymentService.createPaymentIntoDB(req.body);
-    console.log('✅ Payment saved successfully:', result);
+  
 
     sendResponse(res, {
       statusCode: httpStatus.CREATED,
@@ -39,18 +39,13 @@ const createPayment = catchAsync(async (req, res) => {
 
 // Get user's payment history
 const getUserPayments = catchAsync(async (req, res) => {
-    console.log("=== Backend Controller Called ===");
-  console.log("📥 req.params:", req.params);
-  console.log("📥 req.query:", req.query);
+ 
   const { userId } = req.params;
   const query = req.query;
-console.log("🔍 userId:", userId);
-  console.log("🔍 query:", query);
+
 
   const result = await PaymentService.getUserPaymentsFromDB(userId, query);
 
-  console.log("✅ Service returned:");
-  console.log(JSON.stringify(result, null, 2));
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
