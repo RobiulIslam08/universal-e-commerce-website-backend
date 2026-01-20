@@ -28,7 +28,7 @@ export const sendEmail = async (options: IEmailOptions): Promise<void> => {
       html: options.html,
     });
 
-    console.log(`✅ Email sent successfully to: ${options.to}`);
+
   } catch (error) {
     console.error('❌ Error sending email:', error);
     // Don't throw error to prevent payment flow disruption

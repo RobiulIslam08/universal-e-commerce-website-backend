@@ -35,12 +35,7 @@ const getAllProductsFromDB = async (query: TProductQuery) => {
     limit = '10',
   } = query;
 
-  console.log('🔍 getAllProductsFromDB called with:', {
-    searchTerm,
-    category,
-    subCategory,
-  });
-console.log('📥 Received Query at Backend:', query);
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const filter: any = { isDeleted: { $ne: true } };
 
@@ -64,7 +59,7 @@ console.log('📥 Received Query at Backend:', query);
   // Search functionality
   if (searchTerm && searchTerm.trim() !== '') {
     const trimmedSearch = searchTerm.trim();
-    console.log(`🎯 Search term detected: "${trimmedSearch}"`);
+
 
     // Escape special regex characters for security
     const escapedSearch = trimmedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -82,7 +77,7 @@ console.log('📥 Received Query at Backend:', query);
       { sku: { $regex: searchPattern, $options: 'i' } },
     ];
 
-    console.log('🔍 Search pattern:', searchPattern);
+  
   }
 
   
@@ -92,10 +87,10 @@ console.log('📥 Received Query at Backend:', query);
     filter.price = {};
     if (minPrice) filter.price.$gte = Number(minPrice);
     if (maxPrice) filter.price.$lte = Number(maxPrice);
-    console.log('💰 Price filter:', filter.price);
+
   }
 
-  console.log('🔍 Final MongoDB filter:', JSON.stringify(filter, null, 2));
+ 
 
   // Pagination
   const pageNumber = Math.max(1, Number(page) || 1);
@@ -114,10 +109,10 @@ console.log('📥 Received Query at Backend:', query);
     .skip(skip)
     .limit(limitNumber);
 
-  console.log(`✅ Found ${products.length} products (total: ${total})`);
+
 
   if (searchTerm && products.length > 0) {
-    console.log('📋 Search results:');
+
     products.forEach((p, i) => console.log(`   ${i + 1}. "${p.title}"`));
   }
 
@@ -178,7 +173,7 @@ const deleteProductFromDB = async (id: string) => {
 // };
 
 const searchProductsFromDB = async (searchTerm: string) => {
-  console.log('🔍 searchProductsFromDB called with:', searchTerm);
+
 
   // Validation
   if (
@@ -186,7 +181,7 @@ const searchProductsFromDB = async (searchTerm: string) => {
     typeof searchTerm !== 'string' ||
     searchTerm.trim() === ''
   ) {
-    console.log('❌ Invalid search term');
+   
     return [];
   }
 
@@ -201,7 +196,7 @@ const searchProductsFromDB = async (searchTerm: string) => {
   // Use word boundary for exact word matching
   const searchPattern = `\\b${escapedSearchTerm}\\b`;
 
-  console.log(`🎯 Searching with pattern: "${searchPattern}"`);
+  
 
   const filter = {
     isDeleted: { $ne: true },
@@ -221,10 +216,10 @@ const searchProductsFromDB = async (searchTerm: string) => {
     )
     .limit(50);
 
-  console.log(`✅ Found ${products.length} products`);
+ 
 
   if (products.length > 0) {
-    console.log('📋 Results:');
+   
     products.forEach((p, i) => console.log(`   ${i + 1}. "${p.title}"`));
   }
 

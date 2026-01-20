@@ -137,6 +137,8 @@ const createPaymentIntoDB = async (
           payload.shippingAddress,
         );
 
+     
+
         await sendEmail({
           to: payload.userEmail,
           subject: '✅ Payment Confirmation - Order Successful',
@@ -199,7 +201,7 @@ const getUserPaymentsFromDB = async (
   const total = await Payment.countDocuments(filter);
   const totalPage = Math.ceil(total / limit);
 
-  console.log('✅ Found payments:', payments.length, 'Total:', total);
+
 
   // ✅ Return করুন standard structure এ
   return {

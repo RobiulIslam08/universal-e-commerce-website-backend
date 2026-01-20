@@ -37,7 +37,7 @@ const createProduct = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getAllProducts = catchAsync(async (req: Request, res: Response) => {
-  console.log('📥 getAllProducts controller - Query params:', req.query);
+ 
 
   const result = await ProductServices.getAllProductsFromDB(req.query);
 
@@ -52,7 +52,7 @@ const getAllProducts = catchAsync(async (req: Request, res: Response) => {
 
 // Search products endpoint
 const searchProducts = catchAsync(async (req: Request, res: Response) => {
-  console.log('📥 searchProducts controller - Query params:', req.query);
+  
 
   const { q } = req.query;
 
@@ -67,7 +67,7 @@ const searchProducts = catchAsync(async (req: Request, res: Response) => {
   }
 
   const searchTerm = q as string;
-  console.log('🔍 Searching for:', searchTerm);
+ 
 
   const result = await ProductServices.searchProductsFromDB(searchTerm);
 
@@ -173,8 +173,7 @@ const getFeaturedProducts = catchAsync(async (req: Request, res: Response) => {
 const getProductsByCategory = catchAsync(
   async (req: Request, res: Response) => {
     const { category } = req.params;
-    console.log(`📥 getProductsByCategory - Category: ${category}`);
-    console.log('📥 Query params:', req.query);
+ 
 
     const result = await ProductServices.getProductsByCategoryFromDB(
       category,
