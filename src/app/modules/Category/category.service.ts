@@ -210,12 +210,7 @@ const deleteCategoryFromDB = async (slug: string) => {
     );
   }
 
-  const result = await Category.findOneAndUpdate(
-    { slug },
-    { isActive: false },
-    { new: true },
-  );
-
+  const result = await Category.findOneAndDelete({ slug });
   return result;
 };
 

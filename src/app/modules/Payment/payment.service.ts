@@ -15,6 +15,7 @@ import { Product } from '../product/product.model';
 import {
   sendEmail,
   getPaymentConfirmationEmailTemplate,
+  getCODOrderConfirmationEmailTemplate,
 } from '../../utils/sendEmail';
 
 // Initialize Stripe
@@ -137,8 +138,6 @@ const createPaymentIntoDB = async (
           payload.shippingAddress,
         );
 
-     
-
         await sendEmail({
           to: payload.userEmail,
           subject: '✅ Payment Confirmation - Order Successful',
@@ -151,6 +150,33 @@ const createPaymentIntoDB = async (
       } catch (emailError) {
         console.error('❌ Failed to send confirmation email:', emailError);
         // Don't throw error - payment is already successful
+      }
+    }
+
+    // ✅ COD Order - Send confirmation email
+    if (payload.paymentMethod === 'COD') {
+      try {
+        const emailHtml = getCODOrderConfirmationEmailTemplate(
+          payload.userName,
+          payload.amount,
+          payload.currency ?? 'eur',
+          payload.paymentIntentId,
+          payload.items,
+          payload.shippingAddress,
+        );
+
+        await sendEmail({
+          to: payload.userEmail,
+          subject: '🎉 Order Confirmed - Cash on Delivery',
+          html: emailHtml,
+        });
+
+        console.log(
+          `✅ COD order confirmation email sent to: ${payload.userEmail}`,
+        );
+      } catch (emailError) {
+        console.error('❌ Failed to send COD confirmation email:', emailError);
+        // Don't throw error - order is already placed
       }
     }
 
@@ -201,9 +227,7 @@ const getUserPaymentsFromDB = async (
   const total = await Payment.countDocuments(filter);
   const totalPage = Math.ceil(total / limit);
 
-
-
-  // ✅ Return করুন standard structure এ
+  // ✅ Return করুন standard structure
   return {
     data: payments,
     meta: {
