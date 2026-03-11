@@ -4,6 +4,7 @@ export interface ICarousel {
   badge: string;
   badgeSubtext: string;
   bgColor: string;
+  overlayType: 'dark' | 'light' | 'none';
   image?: string;
   buttonText?: string;
   buttonLink?: string;

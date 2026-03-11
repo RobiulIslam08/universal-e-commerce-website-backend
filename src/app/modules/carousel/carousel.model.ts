@@ -28,6 +28,11 @@ const carouselSchema = new Schema<ICarousel>(
       required: [true, 'Background color is required'],
       trim: true,
     },
+    overlayType: {
+      type: String,
+      enum: ['dark', 'light', 'none'],
+      default: 'dark',
+    },
     image: {
       type: String,
       trim: true,

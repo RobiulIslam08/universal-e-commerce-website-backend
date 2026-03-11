@@ -32,6 +32,7 @@ const createCarouselValidationSchema = z.object({
       })
       .min(1, 'Background color cannot be empty')
       .trim(),
+    overlayType: z.enum(['dark', 'light', 'none']).optional().default('dark'),
     image: z.string().optional(),
     buttonText: z.string().trim().optional().or(z.literal('')),
     buttonLink: z.string().trim().optional().or(z.literal('')),
@@ -67,6 +68,7 @@ const updateCarouselValidationSchema = z.object({
       .min(1, 'Background color cannot be empty')
       .trim()
       .optional(),
+    overlayType: z.enum(['dark', 'light', 'none']).optional(),
     image: z.string().optional(),
     buttonText: z.string().trim().optional().or(z.literal('')),
     buttonLink: z.string().trim().optional().or(z.literal('')),

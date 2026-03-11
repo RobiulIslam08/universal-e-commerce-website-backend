@@ -8,6 +8,7 @@ import { PaymentRoutes } from '../modules/Payment/payment.routes';
 import { ReviewRoutes } from '../modules/Review/review.routes';
 import { CategoryRoutes } from '../modules/Category/category.routes';
 import { ContactRoutes } from '../modules/Contact/contact.routes';
+import { OrderRoutes } from '../modules/Order/order.routes';
 
 const router = express.Router();
 
@@ -43,6 +44,12 @@ const moduleRoute = [
   {
     path: '/contacts',
     route: ContactRoutes,
+  },
+  {
+    // Order management & tracking routes
+    // /api/v1/orders
+    path: '/orders',
+    route: OrderRoutes,
   },
 ];
 moduleRoute.forEach((route) => router.use(route.path, route.route));

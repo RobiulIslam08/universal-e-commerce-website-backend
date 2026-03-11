@@ -43,7 +43,7 @@ router.patch(
   CarouselControllers.updateCarouselSlide,
 );
 
-// router.delete('/:id', auth('admin'), CarouselControllers.deleteCarouselSlide);
+router.delete('/:id',  CarouselControllers.deleteCarouselSlide);
 
 router.get('/:id', CarouselControllers.getSingleCarouselSlide);
 

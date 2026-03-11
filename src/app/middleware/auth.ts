@@ -25,8 +25,8 @@ const auth = (...requiredRoles: UserRole[]) => {
 
     const { role, userId, iat } = decoded;
 
-    // checking if the user is exist
-    const user = await (User as any).isUserExitsByCustomId(userId);
+    // checking if the user is exist (userId = MongoDB _id stored in JWT)
+    const user = await User.findById(userId);
 
     if (!user) {
       throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !');

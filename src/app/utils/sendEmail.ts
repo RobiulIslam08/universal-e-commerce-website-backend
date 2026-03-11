@@ -133,7 +133,7 @@ export const getPaymentConfirmationEmailTemplate = (
       
       <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
         <p>This is an automated email. Please do not reply to this message.</p>
-        <p>&copy; ${new Date().getFullYear()} Your E-Commerce Store. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} <strong>UNIVERSE</strong>. All rights reserved.</p>
       </div>
     </body>
     </html>
@@ -245,7 +245,195 @@ export const getCODOrderConfirmationEmailTemplate = (
 
       <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
         <p>This is an automated email. Please do not reply to this message.</p>
-        <p>&copy; ${new Date().getFullYear()} Your E-Commerce Store. All rights reserved.</p>
+        <p>&copy; ${new Date().getFullYear()} <strong>UNIVERSE</strong>. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// ============================================================
+// ORDER STATUS UPDATE EMAIL TEMPLATE
+// যখন admin অর্ডারের status change করে, তখন এই email যাবে
+// ============================================================
+export const getOrderStatusUpdateEmailTemplate = (
+  userName: string,
+  orderId: string,
+  newStatus: string,
+  statusTitle: string,
+  statusDescription: string,
+  trackingNumber?: string,
+  trackingUrl?: string,
+  estimatedDelivery?: Date,
+  items?: Array<{ productName: string; quantity: number; price: number }>,
+  currency: string = 'usd',
+): string => {
+  // Status অনুযায়ী color ও icon নির্ধারণ
+  const statusConfig: Record<
+    string,
+    { color: string; gradient: string; icon: string; bgColor: string }
+  > = {
+    confirmed: {
+      color: '#10b981',
+      gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+      icon: '✅',
+      bgColor: '#ecfdf5',
+    },
+    processing: {
+      color: '#3b82f6',
+      gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+      icon: '⚙️',
+      bgColor: '#eff6ff',
+    },
+    shipped: {
+      color: '#8b5cf6',
+      gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+      icon: '🚚',
+      bgColor: '#f5f3ff',
+    },
+    out_for_delivery: {
+      color: '#f59e0b',
+      gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+      icon: '🏃',
+      bgColor: '#fffbeb',
+    },
+    delivered: {
+      color: '#10b981',
+      gradient: 'linear-gradient(135deg, #10b981 0%, #047857 100%)',
+      icon: '🎉',
+      bgColor: '#ecfdf5',
+    },
+    cancelled: {
+      color: '#ef4444',
+      gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+      icon: '❌',
+      bgColor: '#fef2f2',
+    },
+    returned: {
+      color: '#6b7280',
+      gradient: 'linear-gradient(135deg, #6b7280 0%, #374151 100%)',
+      icon: '↩️',
+      bgColor: '#f9fafb',
+    },
+  };
+
+  const cfg = statusConfig[newStatus] || {
+    color: '#667eea',
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    icon: '📦',
+    bgColor: '#f0f7ff',
+  };
+
+  // Tracking info section (শুধু shipped হলে দেখাবে)
+  const trackingHtml = trackingNumber
+    ? `<div style="margin: 20px 0; padding: 20px; background-color: #f5f3ff; border-radius: 8px; border: 1px solid #8b5cf6;">
+        <h3 style="margin-top: 0; color: #6d28d9; font-size: 16px;">📦 Tracking Information</h3>
+        <p style="margin: 5px 0;"><strong>Tracking Number:</strong> <code style="background:#e5e7eb; padding: 2px 6px; border-radius: 4px;">${trackingNumber}</code></p>
+        ${trackingUrl ? `<p style="margin: 10px 0;"><a href="${trackingUrl}" style="display: inline-block; background: #8b5cf6; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">🔍 Track Your Order</a></p>` : ''}
+        ${estimatedDelivery ? `<p style="margin: 5px 0; font-size: 14px; color: #555;"><strong>Estimated Delivery:</strong> ${new Date(estimatedDelivery).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>` : ''}
+       </div>`
+    : '';
+
+  // Items section (optional)
+  const itemsHtml =
+    items && items.length > 0
+      ? `<h3 style="color: #333; border-bottom: 2px solid ${cfg.color}; padding-bottom: 10px;">Your Items:</h3>
+       <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+         <thead><tr style="background-color: #f8f9fa;">
+           <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Product</th>
+           <th style="padding: 10px; text-align: center; border-bottom: 2px solid #ddd;">Qty</th>
+           <th style="padding: 10px; text-align: right; border-bottom: 2px solid #ddd;">Price</th>
+         </tr></thead>
+         <tbody>${items
+           .map(
+             (item) => `
+           <tr>
+             <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.productName}</td>
+             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+             <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${currency.toUpperCase()} ${(item.price * item.quantity).toFixed(2)}</td>
+           </tr>`,
+           )
+           .join('')}
+         </tbody>
+       </table>`
+      : '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"><title>Order Status Update</title></head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: ${cfg.gradient}; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <div style="font-size: 48px; margin-bottom: 10px;">${cfg.icon}</div>
+        <h1 style="color: white; margin: 0; font-size: 24px;">${statusTitle}</h1>
+        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Order #${orderId}</p>
+      </div>
+      <div style="background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 10px 10px;">
+        <p style="font-size: 16px;">Hi <strong>${userName}</strong>,</p>
+        <div style="background-color: ${cfg.bgColor}; padding: 15px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${cfg.color};">
+          <p style="margin: 0; font-size: 16px; color: #333;">${statusDescription}</p>
+        </div>
+        <div style="background-color: #f9fafb; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Order ID:</strong> <code style="background:#e5e7eb; padding: 2px 6px; border-radius: 4px;">${orderId}</code></p>
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Status:</strong> <span style="color: ${cfg.color}; font-weight: bold; text-transform: capitalize;">${newStatus.replace(/_/g, ' ')}</span></p>
+        </div>
+        ${trackingHtml}
+        ${itemsHtml}
+      </div>
+      <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+        <p>This is an automated email. Please do not reply to this message.</p>
+        <p>&copy; ${new Date().getFullYear()} <strong>UNIVERSE</strong>. All rights reserved.</p>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+// ============================================================
+// ORDER CANCELLED EMAIL TEMPLATE
+// অর্ডার বাতিল হলে customer কে জানানোর জন্য
+// ============================================================
+export const getOrderCancelledEmailTemplate = (
+  userName: string,
+  orderId: string,
+  cancellationReason: string,
+  totalAmount: number,
+  currency: string = 'usd',
+  paymentMethod: string = 'stripe',
+): string => {
+  const refundMsg =
+    paymentMethod === 'stripe'
+      ? `<div style="background-color: #eff6ff; padding: 12px 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #3b82f6;">
+        <p style="margin: 0; font-size: 14px;">💳 <strong>Refund Info:</strong> If you have been charged, a refund of <strong>${currency.toUpperCase()} ${totalAmount.toFixed(2)}</strong> will be processed to your original payment method within 5-7 business days.</p>
+       </div>`
+      : '';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"><title>Order Cancelled</title></head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+        <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
+        <h1 style="color: white; margin: 0;">Order Cancelled</h1>
+        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0;">Order #${orderId}</p>
+      </div>
+      <div style="background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 10px 10px;">
+        <p style="font-size: 16px;">Hi <strong>${userName}</strong>,</p>
+        <p style="font-size: 16px;">We're sorry to inform you that your order has been cancelled.</p>
+        <div style="background-color: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ef4444;">
+          <p style="margin: 5px 0;"><strong>Order ID:</strong> ${orderId}</p>
+          <p style="margin: 5px 0;"><strong>Reason:</strong> ${cancellationReason}</p>
+          <p style="margin: 5px 0;"><strong>Amount:</strong> ${currency.toUpperCase()} ${totalAmount.toFixed(2)}</p>
+        </div>
+        ${refundMsg}
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.FRONTEND_URL || 'https://your-store.com'}/products" style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">Continue Shopping →</a>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
+        <p>This is an automated email. Please do not reply to this message.</p>
+        <p>&copy; ${new Date().getFullYear()} <strong>UNIVERSE</strong>. All rights reserved.</p>
       </div>
     </body>
     </html>

@@ -17,6 +17,13 @@ import {
   getPaymentConfirmationEmailTemplate,
   getCODOrderConfirmationEmailTemplate,
 } from '../../utils/sendEmail';
+// ---- Order module import (payment সফল হলে order auto-create) ----
+import { Order, generateOrderId } from '../Order/order.model';
+import {
+  OrderStatus,
+  OrderPaymentMethod,
+  OrderPaymentStatus,
+} from '../Order/order.interface';
 
 // Initialize Stripe
 const stripe = new Stripe(config.stripe_secret_key as string, {
@@ -182,6 +189,137 @@ const createPaymentIntoDB = async (
 
     await session.commitTransaction();
     await session.endSession();
+
+    // ============================================================
+    // AUTO-CREATE ORDER AFTER SUCCESSFUL PAYMENT
+    // Payment confirm হলে automatically একটি Order record তৈরি হবে
+    // এটি transaction এর বাইরে - order fail হলে payment block হবে না
+    // ============================================================
+    // শুধু নতুন successful payment বা নতুন COD order এর জন্য order create হবে
+    const isNewSuccessfulPayment =
+      payload.status === 'succeeded' &&
+      (!existingPayment || existingPayment.status !== 'succeeded');
+    const isNewCODOrder = payload.paymentMethod === 'COD' && !existingPayment; // COD এ নতুন order
+
+    if ((isNewSuccessfulPayment || isNewCODOrder) && paymentData) {
+      try {
+        // Existing order আছে কিনা check করা (idempotency)
+        const existingOrder = await Order.findOne({
+          paymentIntentId: payload.paymentIntentId,
+        });
+
+        if (!existingOrder) {
+          const orderId = generateOrderId();
+
+          // Payment method mapping
+          const orderPaymentMethod =
+            payload.paymentMethod === 'COD'
+              ? OrderPaymentMethod.COD
+              : OrderPaymentMethod.STRIPE;
+
+          // Payment status mapping
+          const orderPaymentStatus =
+            payload.status === 'succeeded'
+              ? OrderPaymentStatus.PAID
+              : OrderPaymentStatus.PENDING;
+
+          // Initial order status
+          const initialOrderStatus =
+            orderPaymentStatus === OrderPaymentStatus.PAID
+              ? OrderStatus.CONFIRMED
+              : OrderStatus.PENDING;
+
+          // Shipping address - payment.interface তে থাকলে নেওয়া
+          const shippingAddr = payload.shippingAddress
+            ? {
+                firstName: payload.shippingAddress.firstName,
+                lastName: payload.shippingAddress.lastName,
+                email: payload.userEmail,
+                phone: payload.shippingAddress.phone,
+                address: payload.shippingAddress.address,
+                city: payload.shippingAddress.city,
+                state: payload.shippingAddress.state,
+                zipCode: payload.shippingAddress.zipCode,
+                country: payload.shippingAddress.country || 'US',
+              }
+            : {
+                // Minimal fallback (address পাওয়া না গেলে)
+                firstName: payload.userName.split(' ')[0] || payload.userName,
+                lastName: payload.userName.split(' ').slice(1).join(' ') || '-',
+                email: payload.userEmail,
+                phone: 'N/A',
+                address: 'N/A',
+                city: 'N/A',
+                state: 'N/A',
+                zipCode: 'N/A',
+                country: 'N/A',
+              };
+
+          // Order items from payment items
+          const orderItems = payload.items.map((item) => ({
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            price: item.price,
+            image: item.image,
+          }));
+
+          // Initial tracking event
+          const statusTitles: Record<string, string> = {
+            [OrderStatus.CONFIRMED]: 'Order Confirmed',
+            [OrderStatus.PENDING]: 'Order Placed',
+          };
+          const statusDescriptions: Record<string, string> = {
+            [OrderStatus.CONFIRMED]:
+              'Your payment was successful! Your order has been confirmed and will be processed shortly.',
+            [OrderStatus.PENDING]:
+              'Your Cash on Delivery order has been placed. Our team will confirm it shortly.',
+          };
+
+          await Order.create({
+            orderId,
+            userId: new Types.ObjectId(payload.userId),
+            userEmail: payload.userEmail,
+            userName: payload.userName,
+            paymentIntentId: payload.paymentIntentId,
+            paymentMethod: orderPaymentMethod,
+            paymentStatus: orderPaymentStatus,
+            items: orderItems,
+            shippingAddress: shippingAddr,
+            orderStatus: initialOrderStatus,
+            subtotal: payload.amount, // payment amount = subtotal (simplified)
+            discountAmount: 0,
+            shippingCost: 0,
+            taxAmount: 0,
+            totalAmount: payload.amount,
+            currency: payload.currency || 'usd',
+            isDeleted: false,
+            trackingHistory: [
+              {
+                status: initialOrderStatus,
+                title: statusTitles[initialOrderStatus] || 'Order Placed',
+                description:
+                  statusDescriptions[initialOrderStatus] ||
+                  'Your order has been received.',
+                timestamp: new Date(),
+                updatedBy: 'system',
+                isVisible: true,
+              },
+            ],
+          });
+
+          console.log(
+            `✅ Order auto-created: ${orderId} for payment: ${payload.paymentIntentId}`,
+          );
+        }
+      } catch (orderError) {
+        // Order creation fail হলে শুধু log করা, payment block করা নয়
+        console.error(
+          '❌ Auto order creation failed after payment:',
+          orderError,
+        );
+      }
+    }
 
     return paymentData;
   } catch (error) {
