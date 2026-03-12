@@ -7,7 +7,7 @@ import handleValidationError from '../errors/handleValidationError';
 import handleCastError from '../errors/handleCastError';
 import handleDuplicateError from '../errors/handleDuplicateError';
 import AppError from '../errors/AppError';
-import { CLIENT_RENEG_LIMIT } from 'tls';
+
 import config from '../config';
 
 const globalErrorHandler:ErrorRequestHandler = (
@@ -18,11 +18,11 @@ const globalErrorHandler:ErrorRequestHandler = (
 ) => {
   let statusCode =  500;
   
-  let message = 'something went wrong bro from globalmiddleware';
+  let message = 'something went wrong ';
   
   let errorSources:TErrorSourses = [{
     path:"",
-    message:"something went wrong bro from globalmiddleware"
+    message:"something went wrong "
   }]
 
   if(err instanceof ZodError){

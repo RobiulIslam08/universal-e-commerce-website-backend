@@ -30,7 +30,7 @@ const getSingleUser = catchAsync(async (req, res) => {
 
 // Get user profile (current logged-in user)
 const getMyProfile = catchAsync(async (req, res) => {
-  const userId = req.user?.id; // Assuming auth middleware sets req.user
+  const userId = req.user?.userId;
   const result = await UserService.getUserProfile(userId);
 
   sendResponse(res, {
@@ -43,7 +43,7 @@ const getMyProfile = catchAsync(async (req, res) => {
 
 // Update user profile
 const updateMyProfile = catchAsync(async (req, res) => {
-  const userId = req.user?.id;
+  const userId = req.user?.userId;
   const result = await UserService.updateUserProfile(userId, req.body);
 
   sendResponse(res, {
@@ -56,7 +56,7 @@ const updateMyProfile = catchAsync(async (req, res) => {
 
 // Change password
 const changePassword = catchAsync(async (req, res) => {
-  const userId = req.user?.id;
+  const userId = req.user?.userId;
   const { oldPassword, newPassword } = req.body;
 
   await UserService.changePassword(userId, oldPassword, newPassword);

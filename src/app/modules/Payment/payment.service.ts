@@ -26,9 +26,7 @@ import {
 } from '../Order/order.interface';
 
 // Initialize Stripe
-const stripe = new Stripe(config.stripe_secret_key as string, {
-  apiVersion: '2025-12-15.clover',
-});
+const stripe = new Stripe(config.stripe_secret_key as string);
 
 // Create a new payment record
 // const createPaymentIntoDB = async (
@@ -150,12 +148,7 @@ const createPaymentIntoDB = async (
           subject: '✅ Payment Confirmation - Order Successful',
           html: emailHtml,
         });
-
-        console.log(
-          `✅ Payment confirmation email sent to: ${payload.userEmail}`,
-        );
       } catch (emailError) {
-        console.error('❌ Failed to send confirmation email:', emailError);
         // Don't throw error - payment is already successful
       }
     }
@@ -177,12 +170,7 @@ const createPaymentIntoDB = async (
           subject: '🎉 Order Confirmed - Cash on Delivery',
           html: emailHtml,
         });
-
-        console.log(
-          `✅ COD order confirmation email sent to: ${payload.userEmail}`,
-        );
       } catch (emailError) {
-        console.error('❌ Failed to send COD confirmation email:', emailError);
         // Don't throw error - order is already placed
       }
     }
@@ -307,17 +295,9 @@ const createPaymentIntoDB = async (
               },
             ],
           });
-
-          console.log(
-            `✅ Order auto-created: ${orderId} for payment: ${payload.paymentIntentId}`,
-          );
         }
       } catch (orderError) {
         // Order creation fail হলে শুধু log করা, payment block করা নয়
-        console.error(
-          '❌ Auto order creation failed after payment:',
-          orderError,
-        );
       }
     }
 
@@ -325,7 +305,6 @@ const createPaymentIntoDB = async (
   } catch (error) {
     await session.abortTransaction();
     await session.endSession();
-    console.error('❌ Transaction Error:', error);
     throw error;
   }
 };

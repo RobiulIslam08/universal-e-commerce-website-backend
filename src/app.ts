@@ -1,22 +1,22 @@
 import { Application, Request, Response } from 'express';
 import cors from 'cors';
-
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import router from './app/routes';
 import globalErrorHandler from './app/middleware/globalErrorHandler';
 import notFound from './app/middleware/notFound';
+import config from './app/config';
 const app: Application = express();
 
 //parser
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(cookieParser());
 app.use(
   cors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://universal-e-commerce-website-fronte.vercel.app',
-    ],
+    origin: config.cors_origin
+      ? config.cors_origin.split(',')
+      : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

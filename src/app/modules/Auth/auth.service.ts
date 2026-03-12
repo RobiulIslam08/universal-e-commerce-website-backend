@@ -11,6 +11,10 @@ import {
 } from './auth.interface';
 import { createToken } from './auth.utils';
 import { User } from '../User/user.model';
+import {
+  sendEmail,
+  getPasswordResetEmailTemplate,
+} from '../../utils/sendEmail';
 
 // ==================== REGISTRATION ====================
 const registerUser = async (payload: IRegister): Promise<IAuthResponse> => {
@@ -250,7 +254,7 @@ const refreshToken = async (token: string) => {
   const jwtPayload = {
     userId: user._id.toString(),
     role: user.role,
-     name: user.name,
+    name: user.name,
     email: user.email,
   };
 
@@ -300,10 +304,13 @@ const forgetPassword = async (email: string): Promise<void> => {
   // Create reset link
   const resetUILink = `${config.reset_pass_ui_link}?email=${user.email}&token=${resetToken}`;
 
-  // TODO: Send email with reset link
-  // sendEmail(user.email, resetUILink);
-
-  
+  // Send password reset email
+  const emailHtml = getPasswordResetEmailTemplate(user.name, resetUILink);
+  await sendEmail({
+    to: user.email,
+    subject: 'Password Reset Request - UNIVERSE',
+    html: emailHtml,
+  });
 };
 
 // ==================== RESET PASSWORD ====================
@@ -355,5 +362,5 @@ export const AuthServices = {
   refreshToken,
   forgetPassword,
   resetPassword,
-  socialLogin
+  socialLogin,
 };

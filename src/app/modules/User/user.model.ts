@@ -55,6 +55,9 @@ const userSchema = new Schema<IUserDocument, IUserModel>(
     profileImage: {
       type: String,
     },
+    passwordChangedAt: {
+      type: Date,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
@@ -82,6 +85,7 @@ userSchema.pre('save', async function (next) {
   try {
     const saltRounds = 12;
     this.password = await bcrypt.hash(this.password, saltRounds);
+    this.passwordChangedAt = new Date();
     next();
   } catch (error: any) {
     next(error);
@@ -144,6 +148,16 @@ userSchema.statics.isUserDeleted = function (user: IUserDocument): boolean {
 // Static Method: Check if user is blocked
 userSchema.statics.isUserBlocked = function (user: IUserDocument): boolean {
   return user.status === UserStatus.BLOCKED;
+};
+
+// Static Method: Check if JWT was issued before password change
+userSchema.statics.isJWTIssuedBeforePasswordChanged = function (
+  passwordChangedTimestamp: Date,
+  jwtIssuedTimestamp: number,
+): boolean {
+  const passwordChangedTime =
+    new Date(passwordChangedTimestamp).getTime() / 1000;
+  return passwordChangedTime > jwtIssuedTimestamp;
 };
 
 // Create and export the User model

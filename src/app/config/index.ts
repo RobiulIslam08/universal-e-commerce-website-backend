@@ -29,7 +29,7 @@ export default {
   email_port: process.env.EMAIL_PORT,
   email_user: process.env.EMAIL_USER,
   email_pass: process.env.EMAIL_PASS,
-  email_from_name: process.env.EMAIL_FROM_NAME || 'E-Commerce Store',
+  email_from_name: process.env.EMAIL_FROM_NAME || 'UNIVERSEL',
 
   // ============================================================
   // CARRIER / COURIER API CONFIGURATION
@@ -76,4 +76,7 @@ export default {
 
   // Frontend URL (email এ order detail link এর জন্য)
   frontend_url: process.env.FRONTEND_URL || 'http://localhost:3000',
+
+  // CORS origins (comma-separated)
+  cors_origin: process.env.CORS_ORIGIN,
 };

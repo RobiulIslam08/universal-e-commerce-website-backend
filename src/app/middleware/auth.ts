@@ -48,7 +48,7 @@ const auth = (...requiredRoles: UserRole[]) => {
 
     if (
       user.passwordChangedAt &&
-      (User as any).isJWTIssuedBeforePasswordChanged(
+      User.isJWTIssuedBeforePasswordChanged(
         user.passwordChangedAt,
         iat as number,
       )
@@ -57,10 +57,7 @@ const auth = (...requiredRoles: UserRole[]) => {
     }
 
     if (requiredRoles && !requiredRoles.includes(role)) {
-      throw new AppError(
-        httpStatus.UNAUTHORIZED,
-        'You are not authorized  hi!',
-      );
+      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized  !');
     }
 
     req.user = decoded as JwtPayload & { role: string };

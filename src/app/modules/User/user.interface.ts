@@ -22,6 +22,7 @@ export interface IUser {
   phone?: string;
   address?: string;
   profileImage?: string;
+  passwordChangedAt?: Date;
   isDeleted: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -41,6 +42,10 @@ export interface IUserModel extends Model<IUserDocument> {
   ): Promise<boolean>;
   isUserDeleted(user: IUserDocument): boolean;
   isUserBlocked(user: IUserDocument): boolean;
+  isJWTIssuedBeforePasswordChanged(
+    passwordChangedTimestamp: Date,
+    jwtIssuedTimestamp: number,
+  ): boolean;
 }
 
 // Response Interface (without sensitive data)
