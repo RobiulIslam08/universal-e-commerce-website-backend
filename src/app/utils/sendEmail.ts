@@ -367,7 +367,7 @@ export const getOrderStatusUpdateEmailTemplate = (
         <div style="font-size: 48px; margin-bottom: 10px;">${cfg.icon}</div>
         <h1 style="color: white; margin: 0; font-size: 24px;">${statusTitle}</h1>
         <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Order #${orderId}</p>
-      </div>
+      </div>npm 
       <div style="background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 10px 10px;">
         <p style="font-size: 16px;">Hi <strong>${userName}</strong>,</p>
         <div style="background-color: ${cfg.bgColor}; padding: 15px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${cfg.color};">
