@@ -7,30 +7,69 @@ interface IEmailOptions {
   html: string;
 }
 
+// Create reusable transporter (singleton)
+const createTransporter = () => {
+  const port = Number(config.email_port) || 465;
+  const isSecure = port === 465;
+
+  return nodemailer.createTransport({
+    host: config.email_host,
+    port,
+    secure: isSecure, // true for port 465 (SSL), false for 587 (STARTTLS)
+    auth: {
+      user: config.email_user,
+      pass: config.email_pass,
+    },
+    tls: {
+      // Custom mail server এ self-signed certificate থাকলে এটা দরকার
+      rejectUnauthorized: false,
+    },
+    connectionTimeout: 10000, // 10 seconds
+    socketTimeout: 15000, // 15 seconds
+  });
+};
+
 export const sendEmail = async (options: IEmailOptions): Promise<void> => {
   try {
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      host: config.email_host,
-      port: Number(config.email_port),
-      secure: config.email_port === '465', // true for 465, false for other ports
-      auth: {
-        user: config.email_user,
-        pass: config.email_pass,
-      },
-    });
+    const transporter = createTransporter();
 
-    // Send email
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"${config.email_from_name}" <${config.email_user}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
     });
-  } catch (error) {
-    console.error('❌ Error sending email:', error);
-    // Don't throw error to prevent payment flow disruption
+
+    console.log(`✅ Email sent successfully to: ${options.to} | MessageId: ${info.messageId}`);
+  } catch (error: any) {
+    console.error('❌ Error sending email:', {
+      to: options.to,
+      subject: options.subject,
+      errorCode: error?.code,
+      errorMessage: error?.message,
+      errorResponse: error?.response,
+    });
+    // Don't throw error to prevent payment/order flow disruption
     // Just log it for monitoring
+  }
+};
+
+// Email connection test করার জন্য (server startup এ call করা যায়)
+export const testEmailConnection = async (): Promise<void> => {
+  try {
+    const transporter = createTransporter();
+    await transporter.verify();
+    console.log('✅ Email server connection verified successfully');
+    console.log(`   Host: ${config.email_host}:${config.email_port}`);
+    console.log(`   User: ${config.email_user}`);
+  } catch (error: any) {
+    console.error('❌ Email server connection FAILED:', {
+      host: config.email_host,
+      port: config.email_port,
+      user: config.email_user,
+      errorCode: error?.code,
+      errorMessage: error?.message,
+    });
   }
 };
 
@@ -367,7 +406,7 @@ export const getOrderStatusUpdateEmailTemplate = (
         <div style="font-size: 48px; margin-bottom: 10px;">${cfg.icon}</div>
         <h1 style="color: white; margin: 0; font-size: 24px;">${statusTitle}</h1>
         <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">Order #${orderId}</p>
-      </div>npm 
+      </div>
       <div style="background-color: #ffffff; padding: 30px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 10px 10px;">
         <p style="font-size: 16px;">Hi <strong>${userName}</strong>,</p>
         <div style="background-color: ${cfg.bgColor}; padding: 15px 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${cfg.color};">

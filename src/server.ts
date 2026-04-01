@@ -2,6 +2,7 @@ import app from './app';
 import config from './app/config';
 
 import mongoose from 'mongoose';
+import { testEmailConnection } from './app/utils/sendEmail';
 
 // Validate critical environment variables at startup
 const requiredEnvVars = [
@@ -26,6 +27,9 @@ async function main() {
     });
     console.log('✅ Database connected successfully');
 
+    // Email connection verify করুন (startup এ)
+    await testEmailConnection();
+
     app.listen(config.port, () => {
       console.log(`🚀 Server running on port ${config.port}`);
     });
@@ -35,3 +39,4 @@ async function main() {
   }
 }
 main();
+
